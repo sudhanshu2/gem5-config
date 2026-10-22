@@ -1,3 +1,4 @@
+import argparse
 import pathlib
 import sys
 import time
@@ -12,8 +13,19 @@ sys.path.append(f"{pathlib.Path(__file__).resolve().parent.parent}/common")
 import base
 import component
 
-config, paths, p_output, p_checkpoint = base.setup()
-board = component.board.setup_board(config, paths, "gem5-bridge exit 0;")
+parser = argparse.ArgumentParser()
+parser.add_argument("--restore", type=str)
+args = parser.parse_args()
+
+if args.restore is not None:
+    restore_path = pathlib.Path(args.restore).resolve()
+else:
+    restore_path = None
+
+config, paths, output_path, checkpoint_path = base.setup(restore=restore_path)
+board = component.board.setup_board(
+    config, paths, "gem5-bridge exit 0;", restore=restore_path
+)
 
 checkpoint_rate = None
 start_time = time.time()
@@ -23,7 +35,7 @@ def exit_event_handler():
     m5.util.inform(f"[{time.time() - start_time}s] BOOTEXIT: 1 -> Kernel Loaded")
     yield False
     m5.util.inform(f"[{time.time() - start_time}s] BOOTEXIT: 2 -> Ubuntu Booted")
-    simulator.save_checkpoint(p_checkpoint)
+    simulator.save_checkpoint(checkpoint_path)
     yield False
     m5.util.inform(f"[{time.time() - start_time}s] BOOTEXIT: 3 -> Checkpoint Created")
     yield True
@@ -32,14 +44,14 @@ def exit_event_handler():
 def checkpoint_poll_handler():
     while True:
         insts = simulator.get_instruction_count()
-        p_checkpoint_insts = f"{p_output}/checkpoint-{insts}"
+        checkpoint_insts_path = f"{output_path}/checkpoint-{insts}"
         checkpoint_start_time = time.time()
         m5.util.inform(
             f"[{time.time() - start_time}s] CHECKPOINT: Saving at {insts} instructions"
         )
-        simulator.save_checkpoint(p_checkpoint_insts)
+        simulator.save_checkpoint(checkpoint_insts_path)
         m5.util.inform(
-            f"[{time.time() - start_time}s] CHECKPOINT: Saved at {p_checkpoint_insts} in {time.time() - checkpoint_start_time}s"
+            f"[{time.time() - start_time}s] CHECKPOINT: Saved at {checkpoint_insts_path} in {time.time() - checkpoint_start_time}s"
         )
         m5.scheduleTickExitFromCurrent(checkpoint_rate)
         yield False
@@ -47,7 +59,7 @@ def checkpoint_poll_handler():
 
 simulator = Simulator(
     board=board,
-    outdir=p_output,
+    outdir=output_path,
     on_exit_event={
         ExitEvent.EXIT: exit_event_handler(),
         ExitEvent.SCHEDULED_TICK: checkpoint_poll_handler(),

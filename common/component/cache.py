@@ -83,6 +83,8 @@ def build_simple(config: dict) -> AbstractCacheHierarchy:
 def parallelize(cache_hierarchy: AbstractCacheHierarchy, eventq_indices: list) -> None:
     if type(cache_hierarchy) == MESIThreeLevelCacheHierarchy:
         return parallelize_mesi_three_level(cache_hierarchy, eventq_indices)
+    if type(cache_hierarchy) == NoCache:
+        return parallelize_nocache(cache_hierarchy, eventq_indices)
     m5.util.fatal(f"[CONFIG, CACHE]: Cannot parallelize {type(cache_hierarchy)}")
 
 
@@ -103,3 +105,9 @@ def parallelize_mesi_three_level(
         )
         cache_hierarchy.ruby_system.l1_controllers[i].eventq_index = eventq_indices[i]
         cache_hierarchy.ruby_system.l2_controllers[i].eventq_index = eventq_indices[i]
+
+
+def parallelize_mesi_three_level(
+    cache_hierarchy: NoCache, eventq_indices: list
+) -> None:
+    m5.util.warn("[CONFIG, CACHE]: Skipped parallelizing NoCache")

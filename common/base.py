@@ -11,23 +11,23 @@ PATHS_CONFIG = f"{pathlib.Path.home()}/gem5-paths.yaml"
 REPO_PATH = pathlib.Path(__file__).resolve().parent.parent
 
 
-def parse_yaml(p_yaml: str) -> "yaml.YAMLObject":
-    with open(p_yaml) as f_yaml:
+def parse_yaml(yaml_path: str) -> dict:
+    with open(yaml_path) as f_yaml:
         try:
             yaml_obj = yaml.safe_load(f_yaml)
-            return yaml_obj
+            return dict(yaml_obj)
         except yaml.YAMLError as err:
             m5.util.fatal(err)
 
 
-def save_yaml(yaml_obj: "yaml.YAMLObject", p_yaml: str) -> None:
-    f_yaml = open(p_yaml, "w")
+def save_yaml(yaml_obj: dict, yaml_path: str) -> None:
+    f_yaml = open(yaml_path, "w")
     yaml.dump(yaml_obj, f_yaml)
     f_yaml.close()
 
 
 def get_paths() -> dict:
-    p_config = f"{REPO_PATH}/config.yaml"
+    config_path = f"{REPO_PATH}/config.yaml"
     if pathlib.Path(PATHS_CONFIG).is_file() == True:
         m5.util.inform(f"[CONFIG, BASE]: Reading paths from {PATHS_CONFIG}")
         d_paths = parse_yaml(PATHS_CONFIG)
@@ -41,20 +41,22 @@ def get_paths() -> dict:
             "linux": obtain_resource("x86-linux-kernel-5.4.49").get_local_path(),
             "output": f"{REPO_PATH}/m5out",
         }
-    d_paths["config"] = p_config
+    d_paths["config"] = config_path
     m5.util.inform(str(d_paths))
     return d_paths
 
 
-def setup() -> [dict, dict, str, str]:
+def setup(restore: str = None) -> [dict, dict, str, str]:
     paths = get_paths()
     config = parse_yaml(paths["config"])
-    p_output_base = paths["output"]
-    p_output = f"{p_output_base}/{time.strftime('%Y.%m.%d_%H.%M.%S')}"
-    pathlib.Path(p_output).mkdir(parents=True, exist_ok=True)
-    m5.options.outdir = p_output
-    p_checkpoint = f"{p_output}/checkpoint"
+    output_path_base = paths["output"]
+    output_path = f"{output_path_base}/{time.strftime('%Y.%m.%d_%H.%M.%S')}"
+    pathlib.Path(output_path).mkdir(parents=True, exist_ok=True)
+    m5.options.outdir = output_path
+    checkpoint_path = f"{output_path}/checkpoint"
     config["paths"] = paths
-    save_yaml(config, f"{p_output}/config.yaml")
-    m5.util.inform(f"[CONFIG, BASE]: Output directory: {p_output}")
-    return config, paths, p_output, p_checkpoint
+    if restore is not None:
+        config["paths"]["restore"] = restore
+    save_yaml(config, f"{output_path}/config.yaml")
+    m5.util.inform(f"[CONFIG, BASE]: Output directory: {output_path}")
+    return config, paths, output_path, checkpoint_path

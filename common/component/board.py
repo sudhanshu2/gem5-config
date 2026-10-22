@@ -53,13 +53,14 @@ def setup_kernel(
     paths: dict,
     board: AbstractBoard,
     m5_cmd: str,
-    p_restore: Optional[Path],
+    restore_path: Optional[Path],
 ) -> AbstractBoard:
-    if p_restore is not None:
-        if p_restore.is_dir() == False:
+    if restore_path is not None:
+        if restore_path.is_dir() == False:
             m5.util.fatal(
-                f"[CONFIG, BOARD]: Checkpoint directory {p_restore} does not exist"
+                f"[CONFIG, BOARD]: Checkpoint directory {restore_path} does not exist"
             )
+    m5.util.inform(f"[CONFIG, BOARD]: Restoring from {restore_path}")
     kernel_args = board.get_default_kernel_args()
     if bool(config["linux"]["skip_systemd"]) == True:
         kernel_args.append("no_systemd")
@@ -74,6 +75,6 @@ def setup_kernel(
         ),
         readfile_contents=m5_cmd,
         kernel_args=kernel_args,
-        checkpoint=p_restore,
+        checkpoint=restore_path,
     )
     return board
