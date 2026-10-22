@@ -107,7 +107,5 @@ def parallelize_mesi_three_level(
         cache_hierarchy.ruby_system.l2_controllers[i].eventq_index = eventq_indices[i]
 
 
-def parallelize_mesi_three_level(
-    cache_hierarchy: NoCache, eventq_indices: list
-) -> None:
+def parallelize_nocache(cache_hierarchy: NoCache, eventq_indices: list) -> None:
     m5.util.warn("[CONFIG, CACHE]: Skipped parallelizing NoCache")

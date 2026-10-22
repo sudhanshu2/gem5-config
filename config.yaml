@@ -9,7 +9,7 @@ cpu:
     switch_cpu: false
     frequency: 3.3GHz
 cache:
-    type: nocache
+    type: ruby
     levels: 3
     l1d:
         size: 48KiB
