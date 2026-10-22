@@ -13,13 +13,8 @@ sys.path.append(f"{pathlib.Path(__file__).resolve().parent.parent}/common")
 import base
 import component
 
-parser = argparse.ArgumentParser()
-parser.add_argument("config", type=str)
-args = parser.parse_args()
-p_config = args.config
-
-config, p_output, p_checkpoint = base.setup(p_config)
-board = component.board.setup_board(config, "gem5-bridge exit 0;")
+config, paths, p_output, p_checkpoint = base.setup()
+board = component.board.setup_board(config, paths, "gem5-bridge exit 0;")
 
 start_time = time.time()
 

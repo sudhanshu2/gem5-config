@@ -360,23 +360,26 @@ class SerialBoard(AbstractSystemBoard, KernelDiskWorkload, SEBinaryWorkload):
         )
         ide_disk.image.child.image_file = disk_image.get_local_path()
 
-        benchmark_disk = IdeDisk()
-        benchmark_disk.driveID = "device1"
-        if self._mount_benchmark_as_cow == True:
-            benchmark_disk.image = CowDiskImage(
-                child=RawDiskImage(read_only=True), read_only=False
-            )
-            benchmark_disk.image.child.image_file = (
-                self._benchmark_image.get_local_path()
-            )
-        else:
-            benchmark_disk.image = RawDiskImage(
-                image_file=self._benchmark_image.get_local_path(),
-                read_only=False,
-            )
+        if  self._benchmark_image is not None:
+            benchmark_disk = IdeDisk()
+            benchmark_disk.driveID = "device1"
+            if self._mount_benchmark_as_cow == True:
+                benchmark_disk.image = CowDiskImage(
+                    child=RawDiskImage(read_only=True), read_only=False
+                )
+                benchmark_disk.image.child.image_file = (
+                    self._benchmark_image.get_local_path()
+                )
+            else:
+                benchmark_disk.image = RawDiskImage(
+                    image_file=self._benchmark_image.get_local_path(),
+                    read_only=False,
+                )
 
-        # Attach the SimObject to the system.
-        self.pc.south_bridge.ide.disks = [ide_disk, benchmark_disk]
+            # Attach the SimObject to the system.
+            self.pc.south_bridge.ide.disks = [ide_disk, benchmark_disk]
+        else:
+            self.pc.south_bridge.ide.disks = [ide_disk]
 
     @overrides(KernelDiskWorkload)
     def get_default_kernel_args(self) -> List[str]:

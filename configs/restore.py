@@ -14,14 +14,14 @@ import base
 import component
 
 parser = argparse.ArgumentParser()
-parser.add_argument("config", type=str)
 parser.add_argument("checkpoint", type=str)
 args = parser.parse_args()
-p_config = args.config
-p_restore = pathlib.Path(args.checkpoint).resolve()
 
-config, p_output, p_checkpoint = base.setup(p_config)
-board = component.board.setup_board(config, "gem5-bridge exit 0;", restore=p_restore)
+p_restore = pathlib.Path(args.checkpoint).resolve()
+config, paths, p_output, p_checkpoint = base.setup()
+board = component.board.setup_board(
+    config, paths, "gem5-bridge exit 0;", restore=p_restore
+)
 
 start_time = time.time()
 

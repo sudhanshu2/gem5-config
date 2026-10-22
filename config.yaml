@@ -1,9 +1,5 @@
 ---
-image:
-    ubuntu: null
-    benchmark: null
 linux:
-    path: null
     skip_systemd: true
 cpu:
     cores: 8
@@ -37,4 +33,4 @@ parallel-gem5:
     enable: true
     sim-quantum: 1
 fast-forward:
-    checkpoint-rate: 10000000
+    checkpoint-rate: 100000000

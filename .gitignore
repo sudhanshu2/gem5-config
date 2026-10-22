@@ -23,3 +23,10 @@ deps/
 __pycache__/
 *.py[cod]
 *$py.class
+
+# paths
+gem5-paths.yaml
+
+# output
+output/
+m5out/
