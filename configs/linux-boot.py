@@ -13,7 +13,7 @@ sys.path.append(f"{pathlib.Path(__file__).resolve().parent.parent}/common")
 import base
 import component
 
-config, paths, output_path, _ = base.setup()
+config, paths, output_path = base.setup()
 board = component.board.setup_board(config, paths, "gem5-bridge exit 0;")
 
 start_time = time.time()
@@ -23,8 +23,6 @@ def exit_event_handler():
     m5.util.inform(f"[{time.time() - start_time}s] BOOTEXIT: 1 -> Kernel Loaded")
     yield False
     m5.util.inform(f"[{time.time() - start_time}s] BOOTEXIT: 2 -> Ubuntu Booted")
-    yield False
-    m5.util.inform(f"[{time.time() - start_time}s] BOOTEXIT: 3 -> Checkpoint Created")
     yield True
 
 

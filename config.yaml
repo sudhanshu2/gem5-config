@@ -4,7 +4,7 @@ linux:
 cpu:
     cores: 8
     cpu_type:
-        start: atomic
+        start: o3
         switch: o3
     switch_cpu: false
     frequency: 3.3GHz
@@ -33,4 +33,4 @@ parallel-gem5:
     enable: true
     sim-quantum: 1
 fast-forward:
-    checkpoint-rate: 100000000
+    checkpoint-rate: 10000000

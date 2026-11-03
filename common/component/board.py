@@ -60,7 +60,7 @@ def setup_kernel(
             m5.util.fatal(
                 f"[CONFIG, BOARD]: Checkpoint directory {restore_path} does not exist"
             )
-    m5.util.inform(f"[CONFIG, BOARD]: Restoring from {restore_path}")
+        m5.util.inform(f"[CONFIG, BOARD]: Restoring from {restore_path}")
     kernel_args = board.get_default_kernel_args()
     if bool(config["linux"]["skip_systemd"]) == True:
         kernel_args.append("no_systemd")
