@@ -1,10 +1,8 @@
-import pathlib
+import os
 import time
 import yaml
 
-
-PATHS_CONFIG = f"{pathlib.Path.home()}/gem5-paths.yaml"
-REPO_PATH = pathlib.Path(__file__).resolve().parent.parent
+REPO_PATH = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
 
 def parse_yaml(yaml_path: str) -> dict:
@@ -19,41 +17,72 @@ def save_yaml(yaml_obj: dict, yaml_path: str) -> None:
     f_yaml.close()
 
 
-def get_paths() -> dict:
+def get_paths(args: dict) -> dict:
     import m5
     from gem5.resources.resource import obtain_resource
 
-    config_path = f"{REPO_PATH}/config.yaml"
-    if pathlib.Path(PATHS_CONFIG).is_file() == True:
-        m5.util.inform(f"[CONFIG, BASE]: Reading paths from {PATHS_CONFIG}")
-        d_paths = parse_yaml(PATHS_CONFIG)
+    not_none_args = {}
+    for key, value in args.items():
+        if value is not None:
+            not_none_args[key] = value
+    args = not_none_args
+
+    if "config" in args:
+        config_path = args["config"]
     else:
-        m5.util.warn("[CONFIG, BASE]: Using default paths without benchmark image")
-        d_paths = {
-            "image": {
-                "os": obtain_resource("x86-ubuntu-22.04-img").get_local_path(),
-                "benchmark": None,
-            },
-            "linux": obtain_resource("x86-linux-kernel-5.4.49").get_local_path(),
-            "output": f"{REPO_PATH}/m5out",
-        }
-    d_paths["config"] = config_path
-    return d_paths
+        config_path = f"{REPO_PATH}/config.yaml"
+    m5.util.inform(f"[CONFIG, BASE]: Config: {config_path}")
+
+    if "os_image" in args:
+        os_path = args["os_image"]
+    else:
+        os_path = obtain_resource("x86-ubuntu-22.04-img").get_local_path()
+    m5.util.inform(f"[CONFIG, BASE]: OS image: {os_path}")
+
+    if "benchmark_image" in args:
+        benchmark_path = args["benchmark_image"]
+    else:
+        benchmark_path = None
+    m5.util.inform(f"[CONFIG, BASE]: Benchmark image: {benchmark_path}")
+
+    if "kernel" in args:
+        kernel_path = args["kernel"]
+    else:
+        kernel_path = obtain_resource("x86-linux-kernel-5.4.49").get_local_path()
+    m5.util.inform(f"[CONFIG, BASE]: Kernel: {kernel_path}")
+
+    if "outdir" in args:
+        output_path = args["outdir"]
+    else:
+        output_path = f"{m5.options.outdir}/{time.strftime('%Y.%m.%d_%H.%M.%S')}"
+    m5.options.outdir = output_path
+    m5.util.inform(f"[CONFIG, BASE]: Output: {output_path}")
+
+    if "restore" in args:
+        restore_path = args["restore"]
+    else:
+        restore_path = None
+    m5.util.inform(f"[CONFIG, BASE]: Restore: {restore_path}")
+
+    return {
+        "config": config_path,
+        "image": {
+            "os": os_path,
+            "benchmark": benchmark_path,
+        },
+        "kernel": kernel_path,
+        "output": output_path,
+        "restore": restore_path,
+    }
 
 
-def setup(restore: str = None, output_path: str = None) -> [dict, dict, str]:
+def setup(paths: dict) -> [dict, str]:
     import m5
 
-    paths = get_paths()
     config = parse_yaml(paths["config"])
-    if output_path is None:
-        output_path_base = paths["output"]
-        output_path = f"{output_path_base}/{time.strftime('%Y.%m.%d_%H.%M.%S')}"
-    pathlib.Path(output_path).mkdir(parents=True, exist_ok=True)
-    m5.options.outdir = output_path
+    output_path = paths["output"]
+    os.makedirs(output_path, exist_ok=True)
     config["paths"] = paths
-    if restore is not None:
-        config["paths"]["restore"] = str(restore)
     save_yaml(config, f"{output_path}/config.yaml")
     m5.util.inform(f"[CONFIG, BASE]: Output directory: {output_path}")
-    return config, paths, output_path
+    return config, output_path

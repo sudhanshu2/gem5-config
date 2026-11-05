@@ -11,9 +11,7 @@ import component
 from board import parallel, serial
 
 
-def setup_board(
-    config: dict, paths: dict, m5_cmd: str, restore: Optional[Path] = None
-) -> AbstractBoard:
+def setup_board(config: dict, paths: dict, m5_cmd: str) -> AbstractBoard:
     processor = component.cpu.setup_processor(
         start_cpu=component.cpu.get_start_cpu(config),
         switch_cpu=component.cpu.get_switch_cpu(config),
@@ -45,7 +43,7 @@ def setup_board(
             benchmark_image=benchmark_image,
             mount_benchmark_as_cow=True,
         )
-    return setup_kernel(config, paths, board, m5_cmd, restore)
+    return setup_kernel(config, paths, board, m5_cmd)
 
 
 def setup_kernel(
@@ -53,9 +51,10 @@ def setup_kernel(
     paths: dict,
     board: AbstractBoard,
     m5_cmd: str,
-    restore_path: Optional[Path],
 ) -> AbstractBoard:
+    restore_path = config["paths"]["restore"]
     if restore_path is not None:
+        restore_path = Path(restore_path)
         if restore_path.is_dir() == False:
             m5.util.fatal(
                 f"[CONFIG, BOARD]: Checkpoint directory {restore_path} does not exist"
@@ -66,7 +65,7 @@ def setup_kernel(
         kernel_args.append("no_systemd")
     board.set_kernel_disk_workload(
         kernel=KernelResource(
-            local_path=paths["linux"],
+            local_path=paths["kernel"],
             architecture=ISA.X86,
         ),
         disk_image=DiskImageResource(

@@ -13,21 +13,21 @@ sys.path.append(f"{pathlib.Path(__file__).resolve().parent.parent}/common")
 import base
 import component
 
+sys.stdout.reconfigure(line_buffering=True)
+
 parser = argparse.ArgumentParser()
 parser.add_argument("--outdir", type=str)
 parser.add_argument("--restore", type=str)
+parser.add_argument("--config", type=str)
+parser.add_argument("--os-image", type=str)
+parser.add_argument("--benchmark-image", type=str)
+parser.add_argument("--kernel", type=str)
 args = parser.parse_args()
 
-if args.restore is not None:
-    restore_path = pathlib.Path(args.restore).resolve()
-else:
-    restore_path = None
+paths = base.get_paths(vars(args))
+config, output_path = base.setup(paths)
 
-config, paths, output_path = base.setup(restore=restore_path, output_path=args.outdir)
-
-board = component.board.setup_board(
-    config, paths, "gem5-bridge exit 0;", restore=restore_path
-)
+board = component.board.setup_board(config, paths, "gem5-bridge exit 0;")
 
 start_time = time.time()
 exit_reason = None

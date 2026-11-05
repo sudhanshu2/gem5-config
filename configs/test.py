@@ -38,7 +38,6 @@ L3_SLICES = 8
 DRAM_SIZE = "3GiB"
 SIM_QUANTUM = 1
 
-# Default paths from base.get_paths() when ~/gem5-paths.yaml does not exist
 OS_RESOURCE = "x86-ubuntu-22.04-img"
 LINUX_RESOURCE = "x86-linux-kernel-5.4.49"
 OUTPUT_BASE = f"{pathlib.Path(__file__).resolve().parent.parent}/m5out"

@@ -10,36 +10,46 @@ import base
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--gem5", type=str, required=True)
+parser.add_argument("--outdir", type=str, required=True)
+parser.add_argument("--restore", type=str)
+parser.add_argument("--config", type=str)
+parser.add_argument("--os-image", type=str)
+parser.add_argument("--benchmark-image", type=str)
+parser.add_argument("--kernel", type=str)
 args = parser.parse_args()
 
-if os.path.isfile(base.PATHS_CONFIG) == True:
-    output_path = base.parse_yaml(base.PATHS_CONFIG)["output"]
-else:
-    output_path = f"{base.REPO_PATH}/m5out"
+base_output_path = args.outdir
+runner_output_path = (
+    f"{base_output_path}/checkpoint-runner-{time.strftime('%Y.%m.%d_%H.%M.%S')}"
+)
+os.makedirs(runner_output_path)
 
-last_checkpoint = None
+last_checkpoint = args.restore
 while True:
-    execution_output_path = f"{output_path}/{time.strftime('%Y.%m.%d_%H.%M.%S')}"
+    execution_output_path = f"{runner_output_path}/{time.strftime('%Y.%m.%d_%H.%M.%S')}"
+    execution_output_path = execution_output_path.replace("//", "/")
+    os.makedirs(execution_output_path)
     gem5_env = os.environ.copy()
     gem5_env[
         "TSAN_OPTIONS"
-    ] = f"{gem5_env.get('TSAN_OPTIONS', '')} halt_on_error=1 abort_on_error=1".strip()
-    command = [
-        "setarch",
-        os.uname().machine,
-        "-R",
-        args.gem5,
-        "--remote-gdb-port=7050",
-        "--unsafe-remote-gdb",
-        f"--outdir={execution_output_path}",
-        f"{base.REPO_PATH}/configs/checkpoint.py",
-        "--outdir",
-        execution_output_path,
-    ]
+    ] = f"{gem5_env.get('TSAN_OPTIONS', '')} halt_on_error=1 exitcode=66".strip()
+    command = ["setarch", os.uname().machine, "-R"]
+    command += [args.gem5]
+    command += ["--remote-gdb-port=7000", "--unsafe-remote-gdb"]
+    command += [f"--outdir={execution_output_path}"]
+    command += [f"{base.REPO_PATH}/configs/checkpoint.py"]
+    command += [f"--outdir={execution_output_path}"]
     if last_checkpoint is not None:
         command += ["--restore", last_checkpoint]
+    if args.config is not None:
+        command += ["--config", args.config]
+    if args.os_image is not None:
+        command += ["--os-image", args.os_image]
+    if args.benchmark_image is not None:
+        command += ["--benchmark-image", args.benchmark_image]
+    if args.kernel is not None:
+        command += ["--kernel", args.kernel]
     print(f"Executing: {' ' .join(command)}")
-    os.makedirs(execution_output_path, exist_ok=True)
     with open(f"{execution_output_path}/command.log", "w") as f_command:
         f_command.write(
             f"TSAN_OPTIONS='{gem5_env['TSAN_OPTIONS']}' {' '.join(command)}\n"
@@ -47,13 +57,9 @@ while True:
     with open(f"{execution_output_path}/stdout.log", "w") as f_stdout, open(
         f"{execution_output_path}/stderr.log", "w"
     ) as f_stderr:
-        process = subprocess.Popen(
-            command, env=gem5_env, stdout=f_stdout, stderr=f_stderr
+        subprocess.run(
+            command, env=gem5_env, stdout=f_stdout, stderr=f_stderr, check=True
         )
-        print(f"Launched PID: {process.pid}", flush=True)
-        returncode = process.wait()
-    if returncode != 0:
-        raise subprocess.CalledProcessError(returncode, command)
 
     checkpoints = []
     for entry in os.listdir(execution_output_path):

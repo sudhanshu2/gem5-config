@@ -1,0 +1,36 @@
+---
+linux:
+    skip_systemd: true
+cpu:
+    cores: 8
+    cpu_type:
+        start: timing
+        switch: o3
+    switch_cpu: false
+    frequency: 3.3GHz
+cache:
+    type: ruby
+    levels: 3
+    l1d:
+        size: 48KiB
+        assoc: 12
+    l1i:
+        size: 32KiB
+        assoc: 8
+    l2:
+        size: 1280KiB
+        assoc: 20
+    l3:
+        size: 18MiB
+        assoc: 12
+        slices: 8
+dram:
+    type: singlechannel
+    standard: ddr4
+    frequency: 2400
+    size: 3GiB
+parallel-gem5:
+    enable: true
+    sim-quantum: 1
+fast-forward:
+    checkpoint-rate: 50000000
